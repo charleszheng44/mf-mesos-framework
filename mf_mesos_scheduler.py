@@ -1,6 +1,7 @@
 import logging
 import time
 import os
+import sys
 
 from mesos.interface import Scheduler
 from mesos.native import MesosSchedulerDriver
@@ -77,8 +78,9 @@ class MakeflowTask:
 
 class MakeflowScheduler(Scheduler):
 
-    def __init__(self):
+    def __init__(self, mf_wk_dir):
         self.task_list = []
+        self.mf_wk_dir = mf_wk_dir
 
     def registered(self, driver, framework_id, master_info):
         logging.info("Registered with framework id: {}".format(framework_id))
@@ -90,6 +92,16 @@ class MakeflowScheduler(Scheduler):
             state_and_task = get_new_task(self.task_list)            
             if state_and_task[0] == "done":
                 driver.stop()
+
+                # delete tmp files
+                fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_RUN_TASKS)
+                fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_FINISH_TASKS)
+               
+                if os.path.isfile(fn_run_tks_path):
+                    os.remove(fn_run_tks_path)
+                if os.path.isfile(fn_finish_tks_path):
+                    os.remove(fn_finish_tks_path)
+
             if state_and_task[1] != None:
                 mf_task = state_and_task[1]
                 task = new_task(offer, mf_task.task_id)
@@ -117,19 +129,20 @@ class MakeflowScheduler(Scheduler):
             oup_fn = open(FILE_FINISH_TASKS, "w", 0)
 
         if update.state == mesos_pb2.TASK_FAILED:
-            oup_fn.write("{} failed.\n".format(update.task_id.value))
+            oup_fn.write("{} failed\n".format(update.task_id.value))
         if update.state == mesos_pb2.TASK_FINISHED:
-            oup_fn.write("{} finished.\n".format(update.task_id.value))
+            oup_fn.write("{} finished\n".format(update.task_id.value))
 
         oup_fn.close()
 
 if __name__ == '__main__':
     # make us a framework
+    mf_wk_dir = sys.argv[1]
     framework = mesos_pb2.FrameworkInfo()
     framework.user = ""  # Have Mesos fill in the current user.
     framework.name = "Makeflow"
     driver = MesosSchedulerDriver(
-        MakeflowScheduler(),
+        MakeflowScheduler(mf_wk_dir),
         framework,
         "127.0.0.1:5050/"  # assumes running on the master
     )
