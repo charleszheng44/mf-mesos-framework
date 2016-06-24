@@ -112,14 +112,14 @@ class MakeflowScheduler(Scheduler):
         print "Task {} is in state {}".format(update.task_id.value, update.state)
 
         if os.path.isfile(FILE_FINISH_TASKS): 
-            oup_fn = open(FILE_FINISH_TASKS, "a")
+            oup_fn = open(FILE_FINISH_TASKS, "a", 0)
         else:
-            oup_fn = open(FILE_FINISH_TASKS, "w")
+            oup_fn = open(FILE_FINISH_TASKS, "w", 0)
 
         if update.state == mesos_pb2.TASK_FAILED:
-            oup_fn.write("{} is failed.\n".format(update.task_id.value))
+            oup_fn.write("{} failed.\n".format(update.task_id.value))
         if update.state == mesos_pb2.TASK_FINISHED:
-            oup_fn.write("{} is finished.\n".format(update.task_id.value))
+            oup_fn.write("{} finished.\n".format(update.task_id.value))
 
         oup_fn.close()
 

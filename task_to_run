@@ -1,17 +1,17 @@
 task_id: 1
 cmd: /usr/bin/convert -swirl 360 capitol.jpg capitol.360.jpg
-input files: /usr/bin/convert,/home/zc/Work/py_wk/capitol.jpg,
+input files: /usr/bin/convert,/home/zc/Work/ccl_wk/cctools_test/capitol.jpg,
 output files: capitol.360.jpg,
 task_id: 2
 cmd: /usr/bin/convert -swirl 270 capitol.jpg capitol.270.jpg
-input files: /usr/bin/convert,/home/zc/Work/py_wk/capitol.jpg,
+input files: /usr/bin/convert,/home/zc/Work/ccl_wk/cctools_test/capitol.jpg,
 output files: capitol.270.jpg,
 task_id: 3
 cmd: /usr/bin/convert -swirl 180 capitol.jpg capitol.180.jpg
-input files: /usr/bin/convert,/home/zc/Work/py_wk/capitol.jpg,
+input files: /usr/bin/convert,/home/zc/Work/ccl_wk/cctools_test/capitol.jpg,
 output files: capitol.180.jpg,
 task_id: 4
 cmd: /usr/bin/convert -swirl 90 capitol.jpg capitol.90.jpg
-input files: /usr/bin/convert,/home/zc/Work/py_wk/capitol.jpg,
+input files: /usr/bin/convert,/home/zc/Work/ccl_wk/cctools_test/capitol.jpg,
 output files: capitol.90.jpg,
 done
