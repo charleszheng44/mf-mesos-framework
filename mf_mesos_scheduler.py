@@ -12,6 +12,21 @@ logging.basicConfig(level=logging.INFO)
 FILE_RUN_TASKS = "task_to_run"
 FILE_FINISH_TASKS = "finished_tasks"
 
+def make_mf_mesos_executor(mf_task):
+    executor = mesos_pb2.ExecutorInfo()
+    executor.executor_id.value = str(mf_task.task_id)
+    sh_path = os.path.abspath("./mf-mesos-executor.in")
+    executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
+    executor.source = "python executor"
+    executor.command.value = "{} \"{}\"".format(sh_path, mf_task.cmd)
+    for fn in mf_task.inp_fns:
+        uri = executor.command.uris.add()
+        logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
+        uri.value = fn.strip(' \t\n\r')
+        uri.executable = False
+        uri.extract = False
+    return executor
+
 def new_task(offer, task_id):
     task = mesos_pb2.TaskInfo()
     task.task_id.value = task_id
@@ -105,13 +120,9 @@ class MakeflowScheduler(Scheduler):
             if state_and_task[1] != None:
                 mf_task = state_and_task[1]
                 task = new_task(offer, mf_task.task_id)
-                task.command.value = mf_task.cmd 
-                for fn in mf_task.inp_fns:
-                    uri = task.command.uris.add()
-                    logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
-                    uri.value = fn.strip(' \t\n\r')
-                    uri.executable = False
-                    uri.extract = False
+                executor = make_mf_mesos_executor(mf_task)
+                task.executor.MergeFrom(executor)
+                
                 time.sleep(2)
                 logging.info("Launching task {task} "
                              "using offer {offer}.".format(task=task.task_id.value,
