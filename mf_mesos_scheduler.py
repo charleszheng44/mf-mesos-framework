@@ -1,7 +1,8 @@
-import logging
-import time
 import os
 import sys
+import time
+import urllib
+import logging
 
 from mesos.interface import Scheduler
 from mesos.native import MesosSchedulerDriver
@@ -18,7 +19,7 @@ def make_mf_mesos_executor(mf_task):
     sh_path = os.path.abspath("./mf-mesos-executor.in")
     executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
     executor.source = "python executor"
-    executor.command.value = "{} \"{}\"".format(sh_path, mf_task.cmd)
+    executor.command.value = "{} \"{}\" {}".format(sh_path, mf_task.cmd, executor.executor_id.value)
     for fn in mf_task.inp_fns:
         uri = executor.command.uris.add()
         logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
@@ -46,7 +47,6 @@ def new_task(offer, task_id):
     return task
 
 def get_new_task(task_list):
-    logging.info(task_list)
     inp_fn = open(FILE_RUN_TASKS, "r")
     lines = inp_fn.readlines()
     processing = False
@@ -83,6 +83,7 @@ def get_new_task(task_list):
     else: 
         return ("working", None)
 
+# Makeflow task class
 class MakeflowTask:
 
     def __init__(self, task_id, cmd, inp_fns, oup_fns):
@@ -94,7 +95,7 @@ class MakeflowTask:
 class MakeflowScheduler(Scheduler):
 
     def __init__(self, mf_wk_dir):
-        self.task_list = []
+        self.task_list = {}
         self.mf_wk_dir = mf_wk_dir
 
     def registered(self, driver, framework_id, master_info):
@@ -128,7 +129,7 @@ class MakeflowScheduler(Scheduler):
                              "using offer {offer}.".format(task=task.task_id.value,
                                                         offer=offer.id.value))
                 tasks = [task]
-                self.task_list.append(mf_task.task_id)
+                self.task_list[mf_task.task_id] = mf_task
                 driver.launchTasks(offer.id, tasks)
 
     def statusUpdate(self, driver, update):
@@ -145,6 +146,24 @@ class MakeflowScheduler(Scheduler):
             oup_fn.write("{} finished\n".format(update.task_id.value))
 
         oup_fn.close()
+
+    def frameworkMessage(self, driver, executorId, slaveId, message):
+        print "Receive message {}".format(message)
+        message_list = message.split()
+
+        if message_list[0].strip(' \t\n\r') == "output_file_dir":
+            output_file_dir = message_list[1].strip(' \t\n\r')
+            curr_task_id = message_list[3].strip(' \t\n\r')
+            output_fns = self.task_list[curr_task_id].oup_fns
+
+            print "+++++++++++"
+            print output_fns
+            print "+++++++++++"
+
+            for output_fn in output_fns:
+                output_file_addr = "{}/{}".format(output_file_dir, output_fn)
+                print "The output file address is: {}".format(output_file_addr)
+                urllib.urlretrieve(output_file_addr, output_fn)
 
 if __name__ == '__main__':
     # make us a framework

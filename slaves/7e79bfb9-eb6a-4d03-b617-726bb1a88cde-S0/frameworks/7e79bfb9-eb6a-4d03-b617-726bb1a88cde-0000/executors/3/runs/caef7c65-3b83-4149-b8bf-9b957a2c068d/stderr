@@ -1,0 +1,14 @@
+I0628 11:37:50.608394  5437 fetcher.cpp:457] Fetcher Info: {"cache_directory":"\/tmp\/mesos\/fetch\/slaves\/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0\/zc","items":[{"action":"BYPASS_CACHE","uri":{"executable":false,"extract":false,"value":"\/usr\/bin\/convert"}},{"action":"BYPASS_CACHE","uri":{"executable":false,"extract":false,"value":"\/home\/zc\/Work\/ccl_wk\/cctools_test\/capitol.jpg"}}],"sandbox_directory":"\/tmp\/mesos\/slaves\/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0\/frameworks\/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-0000\/executors\/3\/runs\/caef7c65-3b83-4149-b8bf-9b957a2c068d","user":"zc"}
+I0628 11:37:50.618597  5437 fetcher.cpp:412] Fetching URI '/usr/bin/convert'
+I0628 11:37:50.618644  5437 fetcher.cpp:250] Fetching directly into the sandbox directory
+I0628 11:37:50.618680  5437 fetcher.cpp:187] Fetching URI '/usr/bin/convert'
+I0628 11:37:50.618726  5437 fetcher.cpp:167] Copying resource with command:cp '/usr/bin/convert' '/tmp/mesos/slaves/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0/frameworks/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-0000/executors/3/runs/caef7c65-3b83-4149-b8bf-9b957a2c068d/convert'
+I0628 11:37:50.621104  5437 fetcher.cpp:489] Fetched '/usr/bin/convert' to '/tmp/mesos/slaves/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0/frameworks/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-0000/executors/3/runs/caef7c65-3b83-4149-b8bf-9b957a2c068d/convert'
+I0628 11:37:50.621143  5437 fetcher.cpp:412] Fetching URI '/home/zc/Work/ccl_wk/cctools_test/capitol.jpg'
+I0628 11:37:50.621155  5437 fetcher.cpp:250] Fetching directly into the sandbox directory
+I0628 11:37:50.621176  5437 fetcher.cpp:187] Fetching URI '/home/zc/Work/ccl_wk/cctools_test/capitol.jpg'
+I0628 11:37:50.621204  5437 fetcher.cpp:167] Copying resource with command:cp '/home/zc/Work/ccl_wk/cctools_test/capitol.jpg' '/tmp/mesos/slaves/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0/frameworks/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-0000/executors/3/runs/caef7c65-3b83-4149-b8bf-9b957a2c068d/capitol.jpg'
+I0628 11:37:50.623461  5437 fetcher.cpp:489] Fetched '/home/zc/Work/ccl_wk/cctools_test/capitol.jpg' to '/tmp/mesos/slaves/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0/frameworks/7e79bfb9-eb6a-4d03-b617-726bb1a88cde-0000/executors/3/runs/caef7c65-3b83-4149-b8bf-9b957a2c068d/capitol.jpg'
+I0628 11:37:52.246587  5444 exec.cpp:150] Version: 0.29.0
+I0628 11:37:52.251888  5450 exec.cpp:225] Executor registered on agent 7e79bfb9-eb6a-4d03-b617-726bb1a88cde-S0
+I0628 11:37:57.509172  5454 exec.cpp:399] Executor asked to shutdown
