@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 FILE_RUN_TASKS = "task_to_run"
 FILE_FINISH_TASKS = "finished_tasks"
+MF_DONE_FILE = "done"
 
 def make_mf_mesos_executor(mf_task):
     executor = mesos_pb2.ExecutorInfo()
@@ -104,21 +105,13 @@ class MakeflowScheduler(Scheduler):
     def resourceOffers(self, driver, offers):
         logging.info("Recieved resource offers: {}".format([o.id.value for o in offers]))
         
+
         for offer in offers:
+
             state_and_task = get_new_task(self.task_list)            
-            if state_and_task[0] == "done":
-                driver.stop()
-
-                # delete tmp files
-                fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_RUN_TASKS)
-                fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_FINISH_TASKS)
-               
-                if os.path.isfile(fn_run_tks_path):
-                    os.remove(fn_run_tks_path)
-                if os.path.isfile(fn_finish_tks_path):
-                    os.remove(fn_finish_tks_path)
-
+                
             if state_and_task[1] != None:
+                # use the offer if there is new task
                 mf_task = state_and_task[1]
                 task = new_task(offer, mf_task.task_id)
                 executor = make_mf_mesos_executor(mf_task)
@@ -131,6 +124,22 @@ class MakeflowScheduler(Scheduler):
                 tasks = [task]
                 self.task_list[mf_task.task_id] = mf_task
                 driver.launchTasks(offer.id, tasks)
+            else:
+                # decline the offer, if there is no new task
+                driver.declineOffer(offer.id)
+
+        mf_done_fn_path = os.path.join(self.mf_wk_dir, MF_DONE_FILE)
+
+        if os.path.isfile(mf_done_fn_path):
+            fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_RUN_TASKS)
+            fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_FINISH_TASKS)
+        
+            if os.path.isfile(fn_run_tks_path):
+                os.remove(fn_run_tks_path)
+            if os.path.isfile(fn_finish_tks_path):
+                os.remove(fn_finish_tks_path)
+
+            driver.stop()
 
     def statusUpdate(self, driver, update):
         print "Task {} is in state {}".format(update.task_id.value, update.state)
@@ -176,5 +185,9 @@ if __name__ == '__main__':
         framework,
         "127.0.0.1:5050/"  # assumes running on the master
     )
+    
+    status = 0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1
 
-    driver.run() 
+    driver.stop()
+
+    sys.exit(status)
