@@ -10,20 +10,27 @@ from mesos.interface import Executor
 from mesos.interface import mesos_pb2
 
 DEFAULT_SLAVE_IP = "http://localhost:5051"
+TMP_FN = "tmp_file"
 
-def get_sandbox_dir(executor_id, task_id):
+def get_sandbox_dir(framework_id, executor_id, task_id):
     slave_state_uri = "{}/state.json".format(DEFAULT_SLAVE_IP)
+    fp = open(TMP_FN, "w+")
     slave_state = json.load(urllib2.urlopen(slave_state_uri))
-    executors_data = slave_state['completed_frameworks'][0]['completed_executors']
+    executors_data = slave_state['frameworks'][0]['executors']
+    #executors_data = slave_state['completed_executors']
+    fp.write(executors_data)
+    fp.close()
     for executor_data in executors_data:
-        if executor_data['completed_tasks'][0]['executor_id'] == executor_id:
-            return executor_data['directory']
+        if executor_data['id'] == executor_id:
+            if executor_data['completed_tasks'][0]['id'] == task_id:
+                return executor_data['directory']
 
 class MakeflowMesosExecutor(Executor):
 
-    def __init__(self, cmd, executor_id):
+    def __init__(self, cmd, executor_id, framework_id):
         self.cmd = cmd
         self.executor_id = executor_id
+        self.framework_id = framework_id
 
     def launchTask(self, driver, task):
         def run_task():
@@ -45,7 +52,7 @@ class MakeflowMesosExecutor(Executor):
             print "Sent status update"
 
             # send the sandbox URI to the scheduler
-            sandbox_dir = get_sandbox_dir(self.executor_id, task.task_id.value)     
+            sandbox_dir = get_sandbox_dir(self.framework_id, self.executor_id, task.task_id.value)
             get_dir_addr = "output_file_dir http://localhost:5051/files/download?path={}".format(sandbox_dir)
             task_id_msg = "task_id {}".format(task.task_id.value)
             message = "{} {}".format(get_dir_addr, task_id_msg) 
@@ -59,5 +66,5 @@ class MakeflowMesosExecutor(Executor):
 
 if __name__ == '__main__':
     print "starting makeflow mesos executor!"
-    driver = MesosExecutorDriver(MakeflowMesosExecutor(sys.argv[1], sys.argv[2]))
+    driver = MesosExecutorDriver(MakeflowMesosExecutor(sys.argv[1], sys.argv[2], sys.argv[3]))
     sys.exit(0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1)
