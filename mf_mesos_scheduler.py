@@ -130,7 +130,6 @@ class MakeflowScheduler(Scheduler):
             driver.stop()
 
     def statusUpdate(self, driver, update):
-        print "Task {} is in state {}".format(update.task_id.value, update.state)
 
         if os.path.isfile(FILE_TASK_STATE): 
             oup_fn = open(FILE_TASK_STATE, "a", 0)

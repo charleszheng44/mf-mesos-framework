@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import urllib2
+import logging
 import threading
 import subprocess
 
@@ -9,21 +10,35 @@ from mesos.native import MesosExecutorDriver
 from mesos.interface import Executor
 from mesos.interface import mesos_pb2
 
+logging.basicConfig(filename=('{}.log'.format(sys.argv[2])), level=logging.INFO)
+
 DEFAULT_SLAVE_IP = "http://localhost:5051"
-TMP_FN = "tmp_file"
 
 def get_sandbox_dir(framework_id, executor_id, task_id):
     slave_state_uri = "{}/state.json".format(DEFAULT_SLAVE_IP)
-    fp = open(TMP_FN, "w+")
+
     slave_state = json.load(urllib2.urlopen(slave_state_uri))
     executors_data = slave_state['frameworks'][0]['executors']
-    #executors_data = slave_state['completed_executors']
-    fp.write(executors_data)
-    fp.close()
+
     for executor_data in executors_data:
+
         if executor_data['id'] == executor_id:
-            if executor_data['completed_tasks'][0]['id'] == task_id:
-                return executor_data['directory']
+            # The task is in the completed_tasks lists
+            completed_tasks = executor_data['completed_tasks']
+            for completed_task in completed_tasks:
+                if completed_task['id'] == task_id:
+                    return executor_data['directory']
+           
+            # due to the network delay, the task is in the tasks lists
+            tasks = executor_data['tasks']
+            for task in tasks:
+                if task['id'] == task_id:
+                    return executor_data['directory']
+            
+            logging.error("Task {} does not appear in the tasks list\
+                    of executor {}.".format(task_id, executor_id))
+
+            return None 
 
 class MakeflowMesosExecutor(Executor):
 
@@ -46,7 +61,10 @@ class MakeflowMesosExecutor(Executor):
             print "Sending status update..."
             update = mesos_pb2.TaskStatus()
             update.task_id.value = task.task_id.value
-            update.state = mesos_pb2.TASK_FINISHED
+            if rec == 0:
+                update.state = mesos_pb2.TASK_FINISHED
+            else:
+                update.state = mesos_pb2.TASK_FAILED
 
             driver.sendStatusUpdate(update)
             print "Sent status update"
@@ -56,7 +74,7 @@ class MakeflowMesosExecutor(Executor):
             get_dir_addr = "output_file_dir http://localhost:5051/files/download?path={}".format(sandbox_dir)
             task_id_msg = "task_id {}".format(task.task_id.value)
             message = "{} {}".format(get_dir_addr, task_id_msg) 
-            print "Sending message: {}".format(message)
+            logging.info("Sending message: {}".format(message))
             driver.sendFrameworkMessage(message)
             print "Sent output file URI" 
 
