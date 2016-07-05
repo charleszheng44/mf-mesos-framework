@@ -14,6 +14,17 @@ FILE_TASK_INFO = "task_info"
 FILE_TASK_STATE = "task_state"
 MF_DONE_FILE = "makeflow_done"
 
+def is_makeflow_abort():
+    task_info_fn = open(FILE_TASK_INFO, "r")
+    lines = task_info_fn.readlines()
+
+    for line in lines:
+        pass
+
+    task_info_fn.close()
+
+    return False
+
 # Create a ExecutorInfo instance for mesos task
 def make_mf_mesos_executor(mf_task, framework_id):
     executor = mesos_pb2.ExecutorInfo()
@@ -114,14 +125,22 @@ class MakeflowScheduler(Scheduler):
                 # decline the offer, if there is no new task
                 driver.declineOffer(offer.id)
 
+
         # If makeflow creat "makeflow_done" file, stop the scheduler
         mf_done_fn_path = os.path.join(self.mf_wk_dir, MF_DONE_FILE)
 
         if os.path.isfile(mf_done_fn_path):
+            mf_done_fn = open(mf_done_fn_path, "r")
+            mf_state = mf_done_fn.readline().strip(' \t\n\r')
+            mf_done_fn.close()
+
+            logging.info("Makeflow workflow is {}".format(mf_state))
+
             fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_INFO)
             fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_STATE)
-       
-            os.remove(mf_done_fn_path)
+
+            if os.path.isfile(mf_done_fn_path):
+                os.remove(mf_done_fn_path)
             if os.path.isfile(fn_run_tks_path):
                 os.remove(fn_run_tks_path)
             if os.path.isfile(fn_finish_tks_path):
@@ -137,14 +156,14 @@ class MakeflowScheduler(Scheduler):
             oup_fn = open(FILE_TASK_STATE, "w", 0)
 
         if update.state == mesos_pb2.TASK_FAILED:
-            oup_fn.write("{} failed\n".format(update.task_id.value))
+            oup_fn.write("{},failed\n".format(update.task_id.value))
         if update.state == mesos_pb2.TASK_FINISHED:
-            oup_fn.write("{} finished\n".format(update.task_id.value))
+            oup_fn.write("{},finished\n".format(update.task_id.value))
 
         oup_fn.close()
 
     def frameworkMessage(self, driver, executorId, slaveId, message):
-        print "Receive message {}".format(message)
+        logging.info("Receive message {}".format(message))
         message_list = message.split()
 
         if message_list[0].strip(' \t\n\r') == "output_file_dir":
@@ -154,7 +173,7 @@ class MakeflowScheduler(Scheduler):
 
             for output_fn in output_fns:
                 output_file_addr = "{}/{}".format(output_file_dir, output_fn)
-                print "The output file address is: {}".format(output_file_addr)
+                logging.info("The output file address is: {}".format(output_file_addr))
                 urllib.urlretrieve(output_file_addr, output_fn)
 
 if __name__ == '__main__':
