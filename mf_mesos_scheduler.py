@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 import time
 import urllib
 import logging
@@ -14,22 +15,11 @@ FILE_TASK_INFO = "task_info"
 FILE_TASK_STATE = "task_state"
 MF_DONE_FILE = "makeflow_done"
 
-def is_makeflow_abort():
-    task_info_fn = open(FILE_TASK_INFO, "r")
-    lines = task_info_fn.readlines()
-
-    for line in lines:
-        pass
-
-    task_info_fn.close()
-
-    return False
-
 # Create a ExecutorInfo instance for mesos task
 def make_mf_mesos_executor(mf_task, framework_id):
     executor = mesos_pb2.ExecutorInfo()
     executor.framework_id.value = framework_id
-    executor.executor_id.value = str(mf_task.task_id)
+    executor.executor_id.value = str(uuid.uuid4())
     sh_path = os.path.abspath("./mf-mesos-executor.in")
     executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
     executor.source = "python executor"
@@ -70,16 +60,40 @@ def get_new_task(task_table):
     for line in lines:
         task_info_list = line.split(",")
         task_id = task_info_list[0]
-        if (task_id not in task_table):
-            task_cmd = task_info_list[1]
-            task_inp_fns = task_info_list[2].split()
-            task_oup_fns = task_info_list[3].split()
-            task_action = task_info_list[4]
-            mf_task = MakeflowTask(task_id, task_cmd, task_inp_fns, task_oup_fns, task_action)
-            break;
+        task_cmd = task_info_list[1]
+        task_inp_fns = task_info_list[2].split()
+        task_oup_fns = task_info_list[3].split()
+        task_action = task_info_list[4]
 
+        # If there is a task submitted
+        if (task_id not in task_table):
+            mf_task = MakeflowTask(task_id, task_cmd, task_inp_fns, task_oup_fns, task_action)
+            task_action_fn.close()
+            break;
+        
     task_action_fn.close()
+
     return mf_task
+
+# stop all running executors
+def stop_executors(driver, task_table):
+    task_action_fn = open(FILE_TASK_INFO, "r")
+    lines = task_action_fn.readlines()
+    for line in lines:
+        task_info_list = line.split(",")
+        task_id = task_info_list[0]
+        task_action = task_info_list[4]
+        if task_action == "aborting":
+            mf_task = task_table[task_id]
+            driver.sendFrameworkMessage(self, mf_task.executor_id, mf_task.slave_id, "abort")
+    task_action_fn.close()
+
+# Check if all tasks done
+def is_all_executor_stopped(executors_state):
+    for executor_state in executors_state.itervalues():
+        if executor_state == "registered":
+            return False
+    return True
 
 # Makeflow task class
 class MakeflowTask:
@@ -91,10 +105,12 @@ class MakeflowTask:
         self.oup_fns = oup_fns
         self.action = action
 
+# Makeflow mesos scheduler
 class MakeflowScheduler(Scheduler):
 
     def __init__(self, mf_wk_dir):
         self.task_table = {}
+        self.executors_state = {}
         self.mf_wk_dir = mf_wk_dir
 
     def registered(self, driver, framework_id, master_info):
@@ -103,7 +119,6 @@ class MakeflowScheduler(Scheduler):
     def resourceOffers(self, driver, offers):
         logging.info("Recieved resource offers: {}".format([o.id.value for o in offers]))
         
-
         for offer in offers:
 
             mf_task = get_new_task(self.task_table)            
@@ -113,18 +128,21 @@ class MakeflowScheduler(Scheduler):
                 mesos_task = new_task(offer, mf_task.task_id)
                 executor = make_mf_mesos_executor(mf_task, offer.framework_id.value)
                 mesos_task.executor.MergeFrom(executor)
+             
+                mf_task.executor_id = executor.executor_id
+                mf_task.slave_id = offer.slave_id.value
+                mf_task.hostname = offer.hostname
                 
                 time.sleep(2)
                 logging.info("Launching task {task} "
-                             "using offer {offer}.".format(task=mesos_task.task_id.value,
-                                                        offer=offer.id.value))
+                             "using offer {offer}.".format(task=mesos_task.task_id.value,offer=offer.id.value))
                 tasks = [mesos_task]
                 self.task_table[mf_task.task_id] = mf_task
                 driver.launchTasks(offer.id, tasks)
+
             else:
                 # decline the offer, if there is no new task
                 driver.declineOffer(offer.id)
-
 
         # If makeflow creat "makeflow_done" file, stop the scheduler
         mf_done_fn_path = os.path.join(self.mf_wk_dir, MF_DONE_FILE)
@@ -136,15 +154,22 @@ class MakeflowScheduler(Scheduler):
 
             logging.info("Makeflow workflow is {}".format(mf_state))
 
+            if mf_state == "aborted":
+                logging.info("Workflow aborted, stopping executors...")
+                stop_executors(driver, self.task_table)
+
             fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_INFO)
             fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_STATE)
 
-            if os.path.isfile(mf_done_fn_path):
-                os.remove(mf_done_fn_path)
-            if os.path.isfile(fn_run_tks_path):
-                os.remove(fn_run_tks_path)
-            if os.path.isfile(fn_finish_tks_path):
-                os.remove(fn_finish_tks_path)
+            #if os.path.isfile(mf_done_fn_path):
+            #    os.remove(mf_done_fn_path)
+            #if os.path.isfile(fn_run_tks_path):
+            #    os.remove(fn_run_tks_path)
+            #if os.path.isfile(fn_finish_tks_path):
+            #    os.remove(fn_finish_tks_path)
+           
+            while(not is_all_executor_stopped(self.executors_state)):
+                pass
 
             driver.stop()
 
@@ -153,13 +178,14 @@ class MakeflowScheduler(Scheduler):
         if os.path.isfile(FILE_TASK_STATE): 
             oup_fn = open(FILE_TASK_STATE, "a", 0)
         else:
-            oup_fn = open(FILE_TASK_STATE, "w", 0)
+            logging.error("{} is not created in advanced".format(FILE_TASK_STATE))
 
         if update.state == mesos_pb2.TASK_FAILED:
             oup_fn.write("{},failed\n".format(update.task_id.value))
         if update.state == mesos_pb2.TASK_FINISHED:
             oup_fn.write("{},finished\n".format(update.task_id.value))
 
+        self.task_table[update.task_id.value].action = "done"
         oup_fn.close()
 
     def frameworkMessage(self, driver, executorId, slaveId, message):
@@ -175,10 +201,20 @@ class MakeflowScheduler(Scheduler):
                 output_file_addr = "{}/{}".format(output_file_dir, output_fn)
                 logging.info("The output file address is: {}".format(output_file_addr))
                 urllib.urlretrieve(output_file_addr, output_fn)
+        
+        if message_list[0].strip(' \t\n\r') == "[EXUT_STATE]":
+            curr_executor_id = message_list[1].strip(' \t\n\r')
+            curr_executor_state = message_list[2].strip(' \t\n\r')
+            self.executors_state[curr_executor_id] = curr_executor_state
+
 
 if __name__ == '__main__':
     # make us a framework
     mf_wk_dir = sys.argv[1]
+    # just create the "task_state" file
+    open(FILE_TASK_STATE, 'w').close()
+
+    # initialize a framework instance
     framework = mesos_pb2.FrameworkInfo()
     framework.user = ""  # Have Mesos fill in the current user.
     framework.name = "Makeflow"

@@ -47,12 +47,19 @@ class MakeflowMesosExecutor(Executor):
         self.executor_id = executor_id
         self.framework_id = framework_id
 
+    def registered(self, driver, executorInfo, frameworkInfo, slaveInfo):
+        driver.sendFrameworkMessage("[EXUT_STATE] {} registered".format(self.executor_id))
+
+    def disconnected(self, driver):
+        driver.sendFrameworkMessage("[EXUT_STATE] {} disconnected".format(self.executor_id))
+
     def launchTask(self, driver, task):
         def run_task():
             print "Running task %s" % task.task_id.value
             update = mesos_pb2.TaskStatus()
             update.task_id.value = task.task_id.value
             update.state = mesos_pb2.TASK_RUNNING
+            self.task_id = task.task_id.value
             driver.sendStatusUpdate(update)
 
             # Launch the makeflow task
@@ -77,12 +84,26 @@ class MakeflowMesosExecutor(Executor):
             logging.info("Sending message: {}".format(message))
             driver.sendFrameworkMessage(message)
             print "Sent output file URI" 
+            driver.sendFrameworkMessage("[EXUT_STATE] {} stopped".format(self.executor_id))
+            driver.stop()
 
         thread = threading.Thread(target=run_task)
         thread.start()
         thread.join()
 
+    def frameworkMessage(self, driver, message):
+        message_list = message.split()
+        if message_list[0].strip(' \t\n\r') == "abort":
+            logging.info("task {} aborted".format(self.task_id))
+            logging.info("[EXUT_STATE] {} stopped".format(self.executor_id))
+            driver.sendFrameworkMessage("[EXUT_STATE] {} stopped".format(self.executor_id))
+            driver.stop()
+            
 if __name__ == '__main__':
     print "starting makeflow mesos executor!"
     driver = MesosExecutorDriver(MakeflowMesosExecutor(sys.argv[1], sys.argv[2], sys.argv[3]))
-    sys.exit(0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1)
+
+    status = 0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1
+
+    sys.exit(status)
+
