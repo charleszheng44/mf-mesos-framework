@@ -129,7 +129,6 @@ class TaskInfoMonitor(threading.Thread):
                 break;
 
             mod_time = os.stat(FILE_TASK_INFO).st_mtime
-            tmp_fp.write("{}\n".format(mod_time))
             if (self.last_mod_time != mod_time):
                 tmp_fp.write("modified at {}\n".format(mod_time))
                 task_info_fp = open(FILE_TASK_INFO, "r")
