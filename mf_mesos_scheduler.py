@@ -107,43 +107,6 @@ class MakeflowTask:
         self.oup_fns = oup_fns
         self.action = action
 
-class TaskInfoMonitor(threading.Thread):
-
-    def __init__(self, last_mod_time):
-        threading.Thread.__init__(self)
-        self.last_mod_time = last_mod_time
-
-    def run(self):
-        if os.path.isfile("tmp_task"):
-            tmp_fp = open("tmp_task", "a+")
-        else:
-            tmp_fp = open("tmp_task", "w+")
-
-        if (not os.path.isfile(FILE_TASK_INFO)):
-            logging.error("{} is not exist".format(FILE_TASK_INFO))
-
-        tmp_fp.write("time is {}".format(os.stat(FILE_TASK_INFO).st_mtime))
-        while(1):
-
-            if (os.path.isfile(MF_DONE_FILE)):
-                break;
-
-            mod_time = os.stat(FILE_TASK_INFO).st_mtime
-            if (self.last_mod_time != mod_time):
-                tmp_fp.write("modified at {}\n".format(mod_time))
-                task_info_fp = open(FILE_TASK_INFO, "r")
-                lines = task_info_fp.readlines()
-                for line in lines:
-                    task_info_lst = line.split(",")
-                    task_id = task_info_lst[0].strip(' \t\n\r')
-                    task_action = task_info_lst[4].strip(' \t\n\r')
-                    tmp_fp.write("{},{}\n".format(task_id, task_action))
-            
-                task_info_fp.close()
-                self.last_mod_time = mod_time
-
-        tmp_fp.close()
-
 # Makeflow mesos scheduler
 class MakeflowScheduler(Scheduler):
 
@@ -252,12 +215,7 @@ if __name__ == '__main__':
     mf_wk_dir = sys.argv[1]
     # just create the "task_state" file
     open(FILE_TASK_STATE, 'w').close()
-    #open(FILE_TASK_INFO, 'w').close()
-    last_mod_time = os.stat(FILE_TASK_INFO).st_mtime
-
-    print "{} +++++++++".format(last_mod_time)
-    task_monitor = TaskInfoMonitor(last_mod_time)
-    task_monitor.start()
+    open(FILE_TASK_INFO, 'w').close()
 
     # initialize a framework instance
     framework = mesos_pb2.FrameworkInfo()
