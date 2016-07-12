@@ -55,7 +55,7 @@ def new_task(offer, task_id):
     return mesos_task
 
 # If there is new task submited by makeflow, get it 
-def get_new_task(task_table):
+def get_new_task(tasks_table):
     task_action_fn = open(FILE_TASK_INFO, "r")
     lines = task_action_fn.readlines()
     mf_task = None
@@ -68,7 +68,7 @@ def get_new_task(task_table):
         task_action = task_info_list[4]
 
         # If there is a task submitted
-        if (task_id not in task_table):
+        if (task_id not in tasks_table):
             mf_task = MakeflowTask(task_id, task_cmd, task_inp_fns, task_oup_fns, task_action)
             task_action_fn.close()
             break;
@@ -78,7 +78,7 @@ def get_new_task(task_table):
     return mf_task
 
 # stop all running executors
-def stop_executors(driver, task_table):
+def stop_executors(driver, tasks_table):
     task_action_fn = open(FILE_TASK_INFO, "r")
     lines = task_action_fn.readlines()
     for line in lines:
@@ -86,7 +86,7 @@ def stop_executors(driver, task_table):
         task_id = task_info_list[0]
         task_action = task_info_list[4]
         if task_action == "aborting":
-            mf_task = task_table[task_id]
+            mf_task = tasks_table[task_id]
             driver.sendFrameworkMessage(self, mf_task.executor_id, mf_task.slave_id, "abort")
     task_action_fn.close()
 
@@ -148,7 +148,7 @@ class TaskInfoMonitor(threading.Thread):
 class MakeflowScheduler(Scheduler):
 
     def __init__(self, mf_wk_dir):
-        self.task_table = {}
+        self.tasks_table = {}
         self.executors_state = {}
         self.mf_wk_dir = mf_wk_dir
 
@@ -160,7 +160,7 @@ class MakeflowScheduler(Scheduler):
         
         for offer in offers:
 
-            mf_task = get_new_task(self.task_table)            
+            mf_task = get_new_task(self.tasks_table)            
                 
             if mf_task != None:
                 # use the offer if there is new task
@@ -176,7 +176,7 @@ class MakeflowScheduler(Scheduler):
                 logging.info("Launching task {task} "
                              "using offer {offer}.".format(task=mesos_task.task_id.value,offer=offer.id.value))
                 tasks = [mesos_task]
-                self.task_table[mf_task.task_id] = mf_task
+                self.tasks_table[mf_task.task_id] = mf_task
                 driver.launchTasks(offer.id, tasks)
 
             else:
@@ -195,7 +195,7 @@ class MakeflowScheduler(Scheduler):
 
             if mf_state == "aborted":
                 logging.info("Workflow aborted, stopping executors...")
-                stop_executors(driver, self.task_table)
+                stop_executors(driver, self.tasks_table)
 
             fn_run_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_INFO)
             fn_finish_tks_path = os.path.join(self.mf_wk_dir, FILE_TASK_STATE)
@@ -224,7 +224,7 @@ class MakeflowScheduler(Scheduler):
         if update.state == mesos_pb2.TASK_FINISHED:
             oup_fn.write("{},finished\n".format(update.task_id.value))
 
-        self.task_table[update.task_id.value].action = "done"
+        self.tasks_table[update.task_id.value].action = "done"
         oup_fn.close()
 
     def frameworkMessage(self, driver, executorId, slaveId, message):
@@ -234,7 +234,7 @@ class MakeflowScheduler(Scheduler):
         if message_list[0].strip(' \t\n\r') == "output_file_dir":
             output_file_dir = message_list[1].strip(' \t\n\r')
             curr_task_id = message_list[3].strip(' \t\n\r')
-            output_fns = self.task_table[curr_task_id].oup_fns
+            output_fns = self.tasks_table[curr_task_id].oup_fns
 
             for output_fn in output_fns:
                 output_file_addr = "{}/{}".format(output_file_dir, output_fn)
