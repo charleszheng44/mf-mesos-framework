@@ -1,6 +1,7 @@
 import threading
 import Queue
 
+# variables need to be synchronized between threads
 tasks_info_dict
 executors_info_dict
 lock
