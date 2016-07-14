@@ -1,17 +1,12 @@
-import threading
 import Queue
+import threading
 
 # variables need to be synchronized between threads
-tasks_info_dict
-executors_info_dict
-lock
-offers_queue
-
-def init():
-    tasks_info_dict = {}
-    executors_info_dict = {}
-    lock = threading.Lock()
-    offers_queue = Queue.Queue()
+tasks_info_dict = {}
+executors_info_dict = {}
+lock = threading.Lock()
+offers_queue = Queue.Queue()
+mf_wk_dir = "."
 
 # Makeflow Mesos task info class
 class MfMesosTaskInfo:
@@ -30,3 +25,4 @@ class MfMesosExecutorInfo:
         self.executor_id = executor_id
         self.slave_id = slave_id
         self.hostname = hostname
+        self.state = "init"

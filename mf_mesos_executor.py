@@ -93,9 +93,8 @@ class MakeflowMesosExecutor(Executor):
 
     def frameworkMessage(self, driver, message):
         message_list = message.split()
-        if message_list[0].strip(' \t\n\r') == "abort":
+        if message_list[1].strip(' \t\n\r') == "abort":
             logging.info("task {} aborted".format(self.task_id))
-            logging.info("[EXUT_STATE] {} stopped".format(self.executor_id))
             driver.sendFrameworkMessage("[EXUT_STATE] {} stopped".format(self.executor_id))
             driver.stop()
             
