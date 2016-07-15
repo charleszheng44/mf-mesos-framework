@@ -12,34 +12,6 @@ from mesos.interface import mesos_pb2
 
 logging.basicConfig(filename=('{}.log'.format(sys.argv[2])), level=logging.INFO)
 
-DEFAULT_SLAVE_IP = "http://localhost:5051"
-
-def get_sandbox_dir(framework_id, executor_id, task_id):
-    slave_state_uri = "{}/state.json".format(DEFAULT_SLAVE_IP)
-
-    slave_state = json.load(urllib2.urlopen(slave_state_uri))
-    executors_data = slave_state['frameworks'][0]['executors']
-
-    for executor_data in executors_data:
-
-        if executor_data['id'] == executor_id:
-            # The task is in the completed_tasks lists
-            completed_tasks = executor_data['completed_tasks']
-            for completed_task in completed_tasks:
-                if completed_task['id'] == task_id:
-                    return executor_data['directory']
-           
-            # due to the network delay, the task is in the tasks lists
-            tasks = executor_data['tasks']
-            for task in tasks:
-                if task['id'] == task_id:
-                    return executor_data['directory']
-            
-            logging.error("Task {} does not appear in the tasks list\
-                    of executor {}.".format(task_id, executor_id))
-
-            return None 
-
 class MakeflowMesosExecutor(Executor):
 
     def __init__(self, cmd, executor_id, framework_id):
@@ -48,10 +20,38 @@ class MakeflowMesosExecutor(Executor):
         self.framework_id = framework_id
 
     def registered(self, driver, executorInfo, frameworkInfo, slaveInfo):
-        driver.sendFrameworkMessage("[EXUT_STATE] {} registered".format(self.executor_id))
+        driver.sendFrameworkMessage("[EXUT_STATE] {} registered {} {}".format(self.executor_id, slaveInfo.hostname, slaveInfo.port))
+        self.hostname = slaveInfo.hostname
+        self.port = slaveInfo.port
 
     def disconnected(self, driver):
         driver.sendFrameworkMessage("[EXUT_STATE] {} disconnected".format(self.executor_id))
+
+    def get_sandbox_dir(self):
+        slave_state_uri = "http://{}:{}/state.json".format(self.hostname, self.port)
+
+        slave_state = json.load(urllib2.urlopen(slave_state_uri))
+        executors_data = slave_state['frameworks'][0]['executors']
+
+        for executor_data in executors_data:
+
+            if executor_data['id'] == self.executor_id:
+                # The task is in the completed_tasks lists
+                completed_tasks = executor_data['completed_tasks']
+                for completed_task in completed_tasks:
+                    if completed_task['id'] == self.task_id:
+                        return executor_data['directory']
+               
+                # due to the network delay, the task is in the tasks lists
+                tasks = executor_data['tasks']
+                for task in tasks:
+                    if task['id'] == self.task_id:
+                        return executor_data['directory']
+                
+                logging.error("Task {} does not appear in the tasks list\
+                        of executor {}.".format(self.task_id, executor_id))
+
+                return None
 
     def launchTask(self, driver, task):
         def run_task():
@@ -77,14 +77,15 @@ class MakeflowMesosExecutor(Executor):
             print "Sent status update"
 
             # send the sandbox URI to the scheduler
-            sandbox_dir = get_sandbox_dir(self.framework_id, self.executor_id, task.task_id.value)
-            get_dir_addr = "output_file_dir http://localhost:5051/files/download?path={}".format(sandbox_dir)
+            sandbox_dir = self.get_sandbox_dir()
+            get_dir_addr = "[EXECUTOR_OUTPUT] http://{}:{}/files/download?path={}".format(self.hostname, self.port, sandbox_dir)
+            print "{}".format(get_dir_addr)
             task_id_msg = "task_id {}".format(task.task_id.value)
             message = "{} {}".format(get_dir_addr, task_id_msg) 
             logging.info("Sending message: {}".format(message))
             driver.sendFrameworkMessage(message)
             print "Sent output file URI" 
-            driver.sendFrameworkMessage("[EXUT_STATE] {} stopped".format(self.executor_id))
+            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} stopped".format(self.executor_id))
             driver.stop()
 
         thread = threading.Thread(target=run_task)
@@ -95,7 +96,7 @@ class MakeflowMesosExecutor(Executor):
         message_list = message.split()
         if message_list[1].strip(' \t\n\r') == "abort":
             logging.info("task {} aborted".format(self.task_id))
-            driver.sendFrameworkMessage("[EXUT_STATE] {} stopped".format(self.executor_id))
+            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} aborted".format(self.executor_id))
             driver.stop()
             
 if __name__ == '__main__':

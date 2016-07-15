@@ -35,7 +35,6 @@ def new_mesos_executor(mf_task, framework_id):
         uri.extract = False
     return executor
 
-
 # Create a TaskInfo instance
 def new_mesos_task(offer, task_id):
     mesos_task = mesos_pb2.TaskInfo()
@@ -131,22 +130,22 @@ class MakeflowScheduler(Scheduler):
         logging.info("Receive message {}".format(message))
         message_list = message.split()
 
-        if message_list[0].strip(' \t\n\r') == "output_file_dir":
+        if message_list[0].strip(' \t\n\r') == "[EXECUTOR_OUTPUT]":
             output_file_dir = message_list[1].strip(' \t\n\r')
             curr_task_id = message_list[3].strip(' \t\n\r')
 
             with mms.lock:
                 output_fns = mms.tasks_info_dict[curr_task_id].oup_fns
 
-            for output_fn in output_fns:
-                output_file_addr = "{}/{}".format(output_file_dir, output_fn)
-                logging.info("The output file address is: {}".format(output_file_addr))
-                urllib.urlretrieve(output_file_addr, output_fn)
+                for output_fn in output_fns:
+                    output_file_addr = "{}/{}".format(output_file_dir, output_fn)
+                    logging.info("The output file address is: {}".format(output_file_addr))
+                    urllib.urlretrieve(output_file_addr, output_fn)
         
-        if message_list[0].strip(' \t\n\r') == "[EXUT_STATE]":
+        if message_list[0].strip(' \t\n\r') == "[EXECUTOR_STATE]":
             curr_executor_id = message_list[1].strip(' \t\n\r')
             curr_executor_state = message_list[2].strip(' \t\n\r')
-
+             
             with mms.lock:
                 mms.executors_info_dict[curr_executor_id].state = curr_executor_state
 
