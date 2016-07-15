@@ -17,74 +17,84 @@ FILE_TASK_INFO = "task_info"
 FILE_TASK_STATE = "task_state"
 MF_DONE_FILE = "makeflow_done"
 
-# Create a ExecutorInfo instance for mesos task
-def new_mesos_executor(mf_task, framework_id):
-    executor = mesos_pb2.ExecutorInfo()
-    executor.framework_id.value = framework_id
-    executor.executor_id.value = str(uuid.uuid4())
-    sh_path = os.path.abspath("./mf-mesos-executor.in")
-    executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
-    executor.source = "python executor"
-    executor.command.value = "{} \"{}\" {} {}".format(sh_path, mf_task.cmd, 
-            executor.executor_id.value, executor.framework_id.value)
-    for fn in mf_task.inp_fns:
-        uri = executor.command.uris.add()
-        logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
-        uri.value = fn.strip(' \t\n\r')
-        uri.executable = False
-        uri.extract = False
-    return executor
-
-# Create a TaskInfo instance
-def new_mesos_task(offer, task_id):
-    mesos_task = mesos_pb2.TaskInfo()
-    mesos_task.task_id.value = task_id
-    mesos_task.slave_id.value = offer.slave_id.value
-    mesos_task.name = "task {}".format(str(id))
-
-    cpus = mesos_task.resources.add()
-    cpus.name = "cpus"
-    cpus.type = mesos_pb2.Value.SCALAR
-    cpus.scalar.value = 1
-
-    mem = mesos_task.resources.add()
-    mem.name = "mem"
-    mem.type = mesos_pb2.Value.SCALAR
-    mem.scalar.value = 1
-
-    return mesos_task
-
-# stop all running executors
-def stop_executors(driver):
-    task_action_fn = open(FILE_TASK_INFO, "r")
-    lines = task_action_fn.readlines()
-
-    with mms.lock:
-        for line in lines:
-            task_info_list = line.split(",")
-            task_id = task_info_list[0]
-            task_action = task_info_list[4]
-            if task_action == "aborting":
-                mf_task = mms.tasks_info_dict[task_id]
-                driver.sendFrameworkMessage(self, mf_task.executor_id, mf_task.slave_id, "abort")
-
-    task_action_fn.close()
-
-# Check if all tasks done
-def is_all_executor_stopped():
-    
-    with mms.lock:
-        for executor_info in mms.executors_info_dict.itervalues():
-            if executor_info.state == "registered":
-                return False
-
-        return True
 
 # Makeflow mesos scheduler
 class MakeflowScheduler(Scheduler):
 
     def __init__(self, mf_wk_dir):
         self.mf_wk_dir = mf_wk_dir
+
+    # Create a ExecutorInfo instance for mesos task
+    def new_mesos_executor(self, mf_task, framework_id):
+        executor = mesos_pb2.ExecutorInfo()
+        executor.framework_id.value = framework_id
+        executor.executor_id.value = str(uuid.uuid4())
+        sh_path = os.path.abspath("./mf-mesos-executor.in")
+        executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
+        executor.source = "python executor"
+        executor.command.value = "{} \"{}\" {} {}".format(sh_path, mf_task.cmd, 
+                executor.executor_id.value, executor.framework_id.value)
+        for fn in mf_task.inp_fns:
+            uri = executor.command.uris.add()
+            logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
+            uri.value = fn.strip(' \t\n\r')
+            uri.executable = False
+            uri.extract = False
+        return executor
+    
+    # Create a TaskInfo instance
+    def new_mesos_task(self, offer, task_id):
+        mesos_task = mesos_pb2.TaskInfo()
+        mesos_task.task_id.value = task_id
+        mesos_task.slave_id.value = offer.slave_id.value
+        mesos_task.name = "task {}".format(str(id))
+    
+        cpus = mesos_task.resources.add()
+        cpus.name = "cpus"
+        cpus.type = mesos_pb2.Value.SCALAR
+        cpus.scalar.value = 1
+    
+        mem = mesos_task.resources.add()
+        mem.name = "mem"
+        mem.type = mesos_pb2.Value.SCALAR
+        mem.scalar.value = 1
+    
+        return mesos_task
+
+    def launch_mesos_task(self, driver, offer, task_id): 
+
+        mesos_task = self.new_mesos_task(offer, task_id)
+       
+        mf_mesos_task_info = mms.tasks_info_dict[task_id] 
+
+        executor = self.new_mesos_executor(\
+            mf_mesos_task_info, \
+            offer.framework_id.value)
+
+        mesos_task.executor.MergeFrom(executor)
+
+        mf_mesos_executor_info = \
+                mms.MfMesosExecutorInfo(\
+                executor.executor_id, \
+                offer.slave_id.value, offer.hostname) 
+
+        mms.executors_info_dict[executor.executor_id.value] = \
+                mf_mesos_executor_info
+
+        mf_mesos_task_info.executor_info = \
+                mf_mesos_executor_info
+
+        mms.tasks_info_dict[task_id] \
+                = mf_mesos_task_info 
+        
+        # create mesos task and launch it with 
+        # offer 
+        logging.info("Launching task {} using offer {}.".format(\
+                        task_id, offer.id.value))
+
+        # one task is corresponding to one executor
+        tasks = [mesos_task]
+        driver.launchTasks(offer.id, tasks)
 
     def registered(self, driver, framework_id, master_info):
         logging.info("Registered with framework id: {}".format(framework_id))
@@ -149,40 +159,7 @@ class MakeflowScheduler(Scheduler):
             with mms.lock:
                 mms.executors_info_dict[curr_executor_id].state = curr_executor_state
 
-    def launch_mesos_task(self, driver, offer, task_id): 
 
-        mesos_task = new_mesos_task(offer, task_id)
-       
-        mf_mesos_task_info = mms.tasks_info_dict[task_id] 
-
-        executor = new_mesos_executor(\
-            mf_mesos_task_info, \
-            offer.framework_id.value)
-
-        mesos_task.executor.MergeFrom(executor)
-
-        mf_mesos_executor_info = \
-                mms.MfMesosExecutorInfo(\
-                executor.executor_id, \
-                offer.slave_id.value, offer.hostname) 
-
-        mms.executors_info_dict[executor.executor_id.value] = \
-                mf_mesos_executor_info
-
-        mf_mesos_task_info.executor_info = \
-                mf_mesos_executor_info
-
-        mms.tasks_info_dict[task_id] \
-                = mf_mesos_task_info 
-        
-        # create mesos task and launch it with 
-        # offer 
-        logging.info("Launching task {} using offer {}.".format(\
-                        task_id, offer.id.value))
-
-        # one task is corresponding to one executor
-        tasks = [mesos_task]
-        driver.launchTasks(offer.id, tasks)
 
 class MakefowMonitor(threading.Thread):
   
@@ -190,6 +167,32 @@ class MakefowMonitor(threading.Thread):
         threading.Thread.__init__(self)
         self.last_mod_time = created_time
         self.driver = driver
+
+    # Check if all tasks done
+    def is_all_executor_stopped(self):
+        
+        with mms.lock:
+            for executor_info in mms.executors_info_dict.itervalues():
+                if executor_info.state == "registered":
+                    return False
+    
+            return True
+
+    # stop all running executors
+    def stop_executors(self):
+        task_action_fn = open(FILE_TASK_INFO, "r")
+        lines = task_action_fn.readlines()
+    
+        with mms.lock:
+            for line in lines:
+                task_info_list = line.split(",")
+                task_id = task_info_list[0]
+                task_action = task_info_list[4]
+                if task_action == "aborting":
+                    mf_task = mms.tasks_info_dict[task_id]
+                    self.driver.sendFrameworkMessage(self, mf_task.executor_id, mf_task.slave_id, "abort")
+    
+        task_action_fn.close()
 
     def stop_mesos_scheduler(self):
 
@@ -205,7 +208,7 @@ class MakefowMonitor(threading.Thread):
 
             if mf_state == "aborted":
                 logging.info("Workflow aborted, stopping executors...")
-                stop_executors(self.driver)
+                self.stop_executors()
 
             fn_run_tks_path = os.path.join(mms.mf_wk_dir, FILE_TASK_INFO)
             fn_finish_tks_path = os.path.join(mms.mf_wk_dir, FILE_TASK_STATE)
@@ -217,7 +220,7 @@ class MakefowMonitor(threading.Thread):
             #if os.path.isfile(fn_finish_tks_path):
             #    os.remove(fn_finish_tks_path)
            
-            while(not is_all_executor_stopped()):
+            while(not self.is_all_executor_stopped()):
                 pass
 
             self.driver.stop()  
