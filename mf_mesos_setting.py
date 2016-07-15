@@ -1,10 +1,15 @@
+#!/usr/bin/env python
+
+# This module defined global variables and classes 
+# used by mf_mesos_scheduler.py
+
 import Queue
 import threading
 
 # variables need to be synchronized between threads
 tasks_info_dict = {}
 executors_info_dict = {}
-lock = threading.Lock()
+lock = threading.RLock()
 offers_queue = Queue.Queue()
 mf_wk_dir = "."
 
