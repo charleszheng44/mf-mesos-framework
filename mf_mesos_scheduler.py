@@ -29,11 +29,18 @@ class MakeflowScheduler(Scheduler):
         executor = mesos_pb2.ExecutorInfo()
         executor.framework_id.value = framework_id
         executor.executor_id.value = str(uuid.uuid4())
-        sh_path = os.path.abspath("./mf-mesos-executor.in")
+        cctools_path = os.getenv('CCTOOLS')
+        sh_path = os.path.join(cctools_path, 'bin', 'mf-mesos-executor.in')
         executor.name = "{} makeflow mesos executor".format(mf_task.task_id) 
         executor.source = "python executor"
         executor.command.value = "{} \"{}\" {} {}".format(sh_path, mf_task.cmd, 
                 executor.executor_id.value, executor.framework_id.value)
+
+        # add $CCTOOLS as the env variables for executor command
+        cctools_env = executor.command.environment.variables.add()
+        cctools_env.name = "CCTOOLS"
+        cctools_env.value = cctools_path
+
         for fn in mf_task.inp_fns:
             uri = executor.command.uris.add()
             logging.info("input file is: {}".format(fn.strip(' \t\n\r')))
@@ -100,7 +107,8 @@ class MakeflowScheduler(Scheduler):
         logging.info("Registered with framework id: {}".format(framework_id))
 
     def resourceOffers(self, driver, offers):
-        logging.info("Recieved resource offers: {}".format([o.id.value for o in offers]))
+        logging.info("Recieved resource offers: {}".format(\
+                [o.id.value for o in offers]))
        
         idle_task = False 
 
@@ -125,14 +133,15 @@ class MakeflowScheduler(Scheduler):
             oup_fn = open(FILE_TASK_STATE, "a", 0)
         else:
             logging.error("{} is not created in advanced".format(FILE_TASK_STATE))
-
-        if update.state == mesos_pb2.TASK_FAILED:
-            oup_fn.write("{},failed\n".format(update.task_id.value))
-        if update.state == mesos_pb2.TASK_FINISHED:
-            oup_fn.write("{},finished\n".format(update.task_id.value))
+            exit(1)
 
         with mms.lock:
-            mms.tasks_info_dict[update.task_id.value].action = "done"
+            if update.state == mesos_pb2.TASK_FAILED:
+                oup_fn.write("{},failed\n".format(update.task_id.value))
+                mms.tasks_info_dict[update.task_id.value].action = "failed"
+            if update.state == mesos_pb2.TASK_FINISHED:
+                oup_fn.write("{},finished\n".format(update.task_id.value))
+                mms.tasks_info_dict[update.task_id.value].action = "finished"
         
         oup_fn.close()
 
@@ -149,7 +158,8 @@ class MakeflowScheduler(Scheduler):
 
                 for output_fn in output_fns:
                     output_file_addr = "{}/{}".format(output_file_dir, output_fn)
-                    logging.info("The output file address is: {}".format(output_file_addr))
+                    logging.info("The output file address is: {}".format(\
+                            output_file_addr))
                     urllib.urlretrieve(output_file_addr, output_fn)
         
         if message_list[0].strip(' \t\n\r') == "[EXECUTOR_STATE]":
@@ -157,8 +167,17 @@ class MakeflowScheduler(Scheduler):
             curr_executor_state = message_list[2].strip(' \t\n\r')
              
             with mms.lock:
-                mms.executors_info_dict[curr_executor_id].state = curr_executor_state
+                mms.executors_info_dict[curr_executor_id].state = \
+                        curr_executor_state
 
+                # if a executor is aborted, the corresponding task
+                # is aborted
+                if curr_executor_state == "aborted":
+                    curr_task_id = message_list[3].strip(' \t\n\r')
+                    file_task_state = open(FILE_TASK_STATE, "a+")
+                    file_task_state.write("{},{}\n".format(curr_task_id,\
+                            curr_executor_state))
+                    file_task_state.close()
 
 
 class MakefowMonitor(threading.Thread):
@@ -167,6 +186,7 @@ class MakefowMonitor(threading.Thread):
         threading.Thread.__init__(self)
         self.last_mod_time = created_time
         self.driver = driver
+        self.first_time = True
 
     # Check if all tasks done
     def is_all_executor_stopped(self):
@@ -190,7 +210,9 @@ class MakefowMonitor(threading.Thread):
                 task_action = task_info_list[4]
                 if task_action == "aborting":
                     mf_task = mms.tasks_info_dict[task_id]
-                    self.driver.sendFrameworkMessage(self, mf_task.executor_id, mf_task.slave_id, "abort")
+                    self.driver.sendFrameworkMessage(self, \
+                            mf_task.executor_id, mf_task.slave_id, \
+                            "[SCHEDULER_REQUEST] abort")
     
         task_action_fn.close()
 
@@ -226,33 +248,42 @@ class MakefowMonitor(threading.Thread):
             self.driver.stop()  
     
     
-    def abort_mesos_task(self):
+    def abort_mesos_task(self, task_id):
         logging.info("Makeflow is trying to abort task {}.".format(task_id))
+       
+        if mms.tasks_info_dict[task_id].action == "finished" or \
+                mms.tasks_info_dict[task_id].action == "failed" or \
+                mms.tasks_info_dict[task_id].action == "aborted":
+                return
+
+        with mms.lock:
+            if mms.tasks_info_dict[task_id].action == "submitted":
+                mms.tasks_info_dict[task_id].action = "aborted"
+            if mms.tasks_info_dict[task_id].action == "running":
+                py_task_id = mesos_pb2.TaskID()
+                py_task_id.value = task_id 
+                self.driver.killTask(py_task_id)
+                mms.tasks_info_dict[task_id].action = "aborted"
+
+        if os.path.isfile(FILE_TASK_STATE): 
+            oup_fn = open(FILE_TASK_STATE, "a", 0)
+        else:
+            logging.error("{} is not created in advanced".format(FILE_TASK_STATE))
+            exit(1)
         
-        mms.tasks_info_dict[task_id].action \
-                = "aborting"
-
-        abort_executor_id = \
-                mms.tasks_info_dict[task_id].\
-                executor_info.executor_id
-
-        abort_slave_id = \
-                mms.tasks_info_dict[task_id].\
-                executor_info.slave_id
-
-        self.driver.sendFrameworkMessage(executor_id, slave_id, \
-                "[SCH_REQUEST] abort")
-
+        oup_fn.write("{},aborted\n".format(task_id))
+        oup_fn.close()
 
     def run(self):
 
         while(not os.path.isfile(MF_DONE_FILE)):
-
-            logging.info("no done file")
-
             mod_time = os.stat(FILE_TASK_INFO).st_mtime
+            
+            if (self.last_mod_time != mod_time or self.first_time):
 
-            if (self.last_mod_time != mod_time):
+                if self.first_time:
+                    self.first_time = False
+
                 logging.info("{} is modified at {}".format(\
                         FILE_TASK_INFO, mod_time))
                 self.last_mod_time = mod_time
@@ -270,8 +301,6 @@ class MakefowMonitor(threading.Thread):
                     with mms.lock:
                         # find new tasks
                         if (task_id not in mms.tasks_info_dict):
-
-                            logging.info("Found a new task and append it to task dict.")
 
                             mf_mesos_task_info = mms.MfMesosTaskInfo(\
                                     task_id, task_cmd, task_inp_fns, task_oup_fns, \
@@ -295,9 +324,11 @@ if __name__ == '__main__':
     # make us a framework
     mms.mf_wk_dir = sys.argv[1]
 
-    # just create the "task_state" file
-    open(FILE_TASK_STATE, 'w').close()
-    open(FILE_TASK_INFO, 'w').close()
+    # create the "task_state" and "task_info" file
+    if not os.path.isfile(FILE_TASK_STATE):
+        open(FILE_TASK_STATE, 'w').close()
+    if not os.path.isfile(FILE_TASK_INFO):
+        open(FILE_TASK_INFO, 'w').close()
     created_time = os.stat(FILE_TASK_INFO).st_mtime
 
     # initialize a framework instance
@@ -309,7 +340,7 @@ if __name__ == '__main__':
         framework,
         "127.0.0.1:5050/"  # assumes running on the master
     )
-   
+  
     mf_monitor = MakefowMonitor(driver, created_time)
     mf_monitor.start()
 

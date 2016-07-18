@@ -20,12 +20,13 @@ class MakeflowMesosExecutor(Executor):
         self.framework_id = framework_id
 
     def registered(self, driver, executorInfo, frameworkInfo, slaveInfo):
-        driver.sendFrameworkMessage("[EXUT_STATE] {} registered {} {}".format(self.executor_id, slaveInfo.hostname, slaveInfo.port))
+        driver.sendFrameworkMessage("[EXUT_STATE] {} registered {} {}".format(\
+                self.executor_id, slaveInfo.hostname, slaveInfo.port))
         self.hostname = slaveInfo.hostname
         self.port = slaveInfo.port
 
     def disconnected(self, driver):
-        driver.sendFrameworkMessage("[EXUT_STATE] {} disconnected".format(self.executor_id))
+        driver.sendFrameworkMessage("[EXUT_STATE] {} {} disconnected".format(self.executor_id, self.task_id))
 
     def get_sandbox_dir(self):
         slave_state_uri = "http://{}:{}/state.json".format(self.hostname, self.port)
@@ -85,7 +86,8 @@ class MakeflowMesosExecutor(Executor):
             logging.info("Sending message: {}".format(message))
             driver.sendFrameworkMessage(message)
             print "Sent output file URI" 
-            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} stopped".format(self.executor_id))
+            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} stopped".format(\
+                    self.executor_id))
             driver.stop()
 
         thread = threading.Thread(target=run_task)
@@ -96,7 +98,8 @@ class MakeflowMesosExecutor(Executor):
         message_list = message.split()
         if message_list[1].strip(' \t\n\r') == "abort":
             logging.info("task {} aborted".format(self.task_id))
-            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} aborted".format(self.executor_id))
+            driver.sendFrameworkMessage("[EXECUTOR_STATE] {} aborted {}".format(\
+                    self.executor_id, self.task_id))
             driver.stop()
             
 if __name__ == '__main__':
