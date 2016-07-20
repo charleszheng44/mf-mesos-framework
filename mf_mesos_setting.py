@@ -11,6 +11,7 @@ tasks_info_dict = {}
 executors_info_dict = {}
 lock = threading.RLock()
 offers_queue = Queue.Queue()
+# default makeflow working directory
 mf_wk_dir = "."
 
 # Makeflow Mesos task info class
@@ -22,6 +23,7 @@ class MfMesosTaskInfo:
         self.inp_fns = inp_fns
         self.oup_fns = oup_fns
         self.action = action
+        self.executor_id = None
 
 # Makeflow Mesos executor info class
 class MfMesosExecutorInfo:
@@ -31,3 +33,4 @@ class MfMesosExecutorInfo:
         self.slave_id = slave_id
         self.hostname = hostname
         self.state = "init"
+        self.tasks = []
