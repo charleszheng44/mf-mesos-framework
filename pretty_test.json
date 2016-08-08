@@ -1,0 +1,499 @@
+{
+    "attributes": {},
+    "build_date": "2016-06-26 21:06:04",
+    "build_time": 1466989564.0,
+    "build_user": "zc",
+    "completed_frameworks": [
+        {
+            "checkpoint": false,
+            "completed_executors": [
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "2",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0000",
+                            "id": "2",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403353.69689
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403353.69702
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "dfc31859-37ca-4ffb-bf69-a39d15ebf8b5",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0000/executors/2/runs/dfc31859-37ca-4ffb-bf69-a39d15ebf8b5",
+                    "id": "2",
+                    "name": "2 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                },
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "3",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0000",
+                            "id": "3",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403357.62576
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403357.6259
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "23b34ed3-27a3-47fa-82af-7fd3a9464a3a",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0000/executors/3/runs/23b34ed3-27a3-47fa-82af-7fd3a9464a3a",
+                    "id": "3",
+                    "name": "3 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                },
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "4",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0000",
+                            "id": "4",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403361.61806
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403361.61819
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "e1b1e172-3153-4661-b03c-11aeab116d8a",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0000/executors/4/runs/e1b1e172-3153-4661-b03c-11aeab116d8a",
+                    "id": "4",
+                    "name": "4 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                },
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "1",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0000",
+                            "id": "1",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403349.30009
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403349.30024
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "554cecdd-4518-4b38-ab91-f3532ae2e162",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0000/executors/1/runs/554cecdd-4518-4b38-ab91-f3532ae2e162",
+                    "id": "1",
+                    "name": "1 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                }
+            ],
+            "executors": [],
+            "failover_timeout": 0.0,
+            "hostname": "zc-T430",
+            "id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0000",
+            "name": "Makeflow",
+            "role": "*",
+            "user": "zc"
+        }
+    ],
+    "flags": {
+        "appc_simple_discovery_uri_prefix": "http://",
+        "appc_store_dir": "/tmp/mesos/store/appc",
+        "authenticate_http": "false",
+        "authenticatee": "crammd5",
+        "authorizer": "local",
+        "cgroups_cpu_enable_pids_and_tids_count": "false",
+        "cgroups_enable_cfs": "false",
+        "cgroups_hierarchy": "/sys/fs/cgroup",
+        "cgroups_limit_swap": "false",
+        "cgroups_root": "mesos",
+        "container_disk_watch_interval": "15secs",
+        "containerizers": "mesos",
+        "default_role": "*",
+        "disk_watch_interval": "1mins",
+        "docker": "docker",
+        "docker_kill_orphans": "true",
+        "docker_registry": "https://registry-1.docker.io",
+        "docker_remove_delay": "6hrs",
+        "docker_socket": "/var/run/docker.sock",
+        "docker_stop_timeout": "0ns",
+        "docker_store_dir": "/tmp/mesos/store/docker",
+        "enforce_container_disk_quota": "false",
+        "executor_registration_timeout": "1mins",
+        "executor_shutdown_grace_period": "5secs",
+        "fetcher_cache_dir": "/tmp/mesos/fetch",
+        "fetcher_cache_size": "2GB",
+        "frameworks_home": "",
+        "gc_delay": "1weeks",
+        "gc_disk_headroom": "0.1",
+        "hadoop_home": "",
+        "help": "false",
+        "hostname_lookup": "true",
+        "http_authenticators": "basic",
+        "http_command_executor": "false",
+        "image_provisioner_backend": "copy",
+        "initialize_driver_logging": "true",
+        "isolation": "posix/cpu,posix/mem",
+        "launcher_dir": "/usr/local/libexec/mesos",
+        "logbufsecs": "0",
+        "logging_level": "INFO",
+        "master": "127.0.0.1:5050",
+        "oversubscribed_resources_interval": "15secs",
+        "perf_duration": "10secs",
+        "perf_interval": "1mins",
+        "port": "5051",
+        "qos_correction_interval_min": "0ns",
+        "quiet": "false",
+        "recover": "reconnect",
+        "recovery_timeout": "15mins",
+        "registration_backoff_factor": "1secs",
+        "revocable_cpu_low_priority": "true",
+        "sandbox_directory": "/mnt/mesos/sandbox",
+        "strict": "true",
+        "switch_user": "true",
+        "systemd_enable_support": "true",
+        "systemd_runtime_directory": "/run/systemd/system",
+        "version": "false",
+        "work_dir": "/tmp/mesos"
+    },
+    "frameworks": [
+        {
+            "checkpoint": false,
+            "completed_executors": [],
+            "executors": [
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "2",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0001",
+                            "id": "2",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403470.71287
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403470.713
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "7e2f9a02-e1d6-45a0-975b-8555515f7e20",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0001/executors/2/runs/7e2f9a02-e1d6-45a0-975b-8555515f7e20",
+                    "id": "2",
+                    "name": "2 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                },
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "1",
+                            "framework_id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0001",
+                            "id": "1",
+                            "name": "task <built-in function id>",
+                            "resources": {
+                                "cpus": 1.0,
+                                "disk": 0.0,
+                                "gpus": 0.0,
+                                "mem": 1.0
+                            },
+                            "slave_id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1467403466.03439
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.1.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.1.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1467403466.03454
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "0cf507d3-8119-4480-a920-e7b0007e3a1b",
+                    "directory": "/tmp/mesos/slaves/5d80d228-e2a0-4a89-a8af-66057c60ad67-S0/frameworks/4e6d9aff-9a39-4459-b74c-56c07bad774a-0001/executors/1/runs/0cf507d3-8119-4480-a920-e7b0007e3a1b",
+                    "id": "1",
+                    "name": "1 makeflow mesos executor",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0.0,
+                        "disk": 0.0,
+                        "gpus": 0.0,
+                        "mem": 0.0
+                    },
+                    "source": "python executor",
+                    "tasks": []
+                }
+            ],
+            "failover_timeout": 0.0,
+            "hostname": "zc-T430",
+            "id": "4e6d9aff-9a39-4459-b74c-56c07bad774a-0001",
+            "name": "Makeflow",
+            "role": "*",
+            "user": "zc"
+        }
+    ],
+    "git_branch": "refs/heads/master",
+    "git_sha": "0f25c7b9420a7368be0657b3acca2c9fe45f38f2",
+    "hostname": "zc-T430",
+    "id": "5d80d228-e2a0-4a89-a8af-66057c60ad67-S0",
+    "master_hostname": "localhost",
+    "pid": "slave(1)@127.0.1.1:5051",
+    "resources": {
+        "cpus": 4.0,
+        "disk": 204240.0,
+        "gpus": 0.0,
+        "mem": 14749.0,
+        "ports": "[31000-32000]"
+    },
+    "start_time": 1467403320.32508,
+    "version": "0.29.0"
+}
